@@ -1,0 +1,25 @@
+pipecat-ai[daily,openai,silero,deepgram,playht,azure,google]
+fastapi
+uvicorn
+python-dotenv
+loguru
+twilio
+langchain_core
+langchain_openai
+langchain
+langchain_community
+Pillow
+pyloudnorm
+google.generativeai
+google.ai.generativelanguage
+google-cloud-texttospeech
+google-cloud-speech
+plivo
+# litellm
+python-multipart
+gptcache
+sentence_transformers
+redis
+qdrant_client
+python-multipart	
+torchaudio
