@@ -23,7 +23,7 @@ class DailyRoomSipParams(BaseModel):
 
 
 class DailyRoomProperties(BaseModel, extra="allow"):
-    exp: float = Field(default_factory=lambda: time.time() + 5 * 60)
+    exp: float = Field(default_factory=lambda: time.time() + 60 * 60)
     enable_chat: bool = False
     enable_emoji_reactions: bool = False
     eject_at_room_exp: bool = True

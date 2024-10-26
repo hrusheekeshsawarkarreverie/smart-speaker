@@ -737,7 +737,7 @@ async def start_agent(request: Request,background_tasks: BackgroundTasks):
 
     # Get the token for the room
     # token = await daily_helpers["rest"].get_token(room.url)
-    token = daily_helpers["rest"].get_token(room.url)
+    token = daily_helpers["rest"].get_token(room.url,expiry_time=60*60)
 
     if not token:
         raise HTTPException(
