@@ -32,6 +32,7 @@ import sys
 import requests
 import time
 import redis
+from apscheduler.schedulers.background import BackgroundScheduler
 
 ########################################
 logger.remove(0)
@@ -48,6 +49,15 @@ MAX_BOTS_PER_ROOM = 1
 bot_procs = {}
 daily_helpers = {}
 
+
+def restart_server():
+    print("Restarting FastAPI server...")
+    os.execv(sys.executable, ['python'] + sys.argv)
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(restart_server, 'interval', hours=1)
+# scheduler.add_job(restart_server, 'interval', minutes=1)
+scheduler.start()
 
 def cleanup():
     # Clean up function, just to be extra safe
@@ -74,23 +84,6 @@ async def lifespan(app: FastAPI):
     cleanup()
 
 
-# parser = argparse.ArgumentParser(description="A script that runs different Setups based on arguments (WebRTC and IVR.")
-
-# # Adding an optional argument
-# parser.add_argument('--arg', type=str, help='An optional argument to trigger a specific function')
-
-# # Parsing the arguments
-# args = parser.parse_args()
-
-# print(args)
-# if args.arg:
-#     print("Starting WebRTC Setup")
-#     app = FastAPI(lifespan=lifespan)
-# else:
-#     print("Starting IVR Setup")
-#     app = FastAPI()
-
-# app = FastAPI()
 app = FastAPI(lifespan=lifespan)
 
 # use this for the IVR version
@@ -105,24 +98,7 @@ app.add_middleware(
 
 CALL_DETAILS = dict()
 
-# Fetch Twilio API Details
-twilio_account_sid = os.getenv("TWILIO_ACCOUNT_SID")
-twilio_auth_token = os.getenv("TWILIO_AUTH_TOKEN")
-twilio_phone_number = os.getenv("TWILIO_PHONE_NUMBER")
 
-# Initialize Twilio client
-twilio_client = Client(twilio_account_sid, twilio_auth_token)
-
-
-# fetch Plivo API details
-plivo_auth_id = os.getenv("PLIVO_AUTH_ID")
-plivo_auth_token = os.getenv("PLIVO_AUTH_TOKEN")
-plivo_phone_number = os.getenv("PLIVO_PHONE_NUMBER")
-print(plivo_auth_id, plivo_auth_token)
-# Initialize Plivo client
-plivo_client = plivo.RestClient(
-    os.getenv("PLIVO_AUTH_ID"), os.getenv("PLIVO_AUTH_TOKEN")
-)
 
 
 def format_stt_variables(variables):

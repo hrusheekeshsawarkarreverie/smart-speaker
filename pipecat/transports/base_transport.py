@@ -30,7 +30,7 @@ class TransportParams(BaseModel):
     audio_in_sample_rate: int = 16000
     audio_in_channels: int = 1
     vad_enabled: bool = False
-    vad_audio_passthrough: bool = False
+    vad_audio_passthrough: bool = True
     vad_analyzer: VADAnalyzer | None = None
 
 

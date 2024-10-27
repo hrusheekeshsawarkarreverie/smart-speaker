@@ -161,7 +161,7 @@ from helpers import (
     KrutrimOpenAILLMService,
     TranslateInput,
 )
-from runner import configure
+# from runner import configure
 from pipecat.services.azure import AzureSTTService
 from pipecat.services.reverie_tts import ReverieTTSService
 from pipecat.services.dify import (
@@ -340,6 +340,54 @@ async def main(room_url, token,bot_details):
             current_language = language
         
         
+        async def language_change(llm,args):
+            logger.debug(args)
+            logger.debug(f"language change to {args['bot_lang']}")
+
+            # global current_language
+            current_language = args["bot_lang"]
+
+            deepgram_stt_en = DeepgramSTTService(
+                api_key=os.getenv("DEEPGRAM_API_KEY"),
+                url="",
+                live_options=LiveOptions(
+                    encoding="linear16",
+                    language=current_language,
+                    model="nova-2-conversationalai",
+                    sample_rate=16000,
+                    channels=1,
+                    interim_results=True,
+                    smart_format=True,
+                ),
+                language=current_language,
+            )
+        #     pipelinee = Pipeline([
+        #     transport.input(),
+        #     # azure_stt_kn,
+        #     # deepgram_stt_hi,
+        #     deepgram_stt_en,
+        #     # stt_services,
+        #     # user_response,
+        #     # llm,
+        #     # krutim_llm,
+        #     # dify_llm,
+        #     user_context,
+        #     rev_pipecat_llm,
+        #     # tts,
+        #     # reverie_tts_kn,
+        #     tts_11labs_hi,
+        #     # azure_tts_hi,
+        #     # reverie_tts_hi,
+        #     # ta,
+        #     transport.output(),
+        #     # assistant_response,
+        #     assistant_context,
+        # ])
+
+        # task = PipelineTask(pipeline, PipelineParams(allow_interruptions=True))
+        # await task.queue_frame(quiet_frame)
+            return current_language
+
 
         # initialize messages
         messages = []
@@ -451,6 +499,7 @@ async def main(room_url, token,bot_details):
             # log the agent prompt
             # logger.info(f"Agent Prompt: {agentPrompt}")
             logger.debug(f"nmt_flag: {nmt_flag}, tgt_lan: {bot_lang}, nmt_provider: {nmt_provider}")
+            logger.debug(f"agentPrompt: {agentPrompt}")
             # reverie openai llm service
             llm = ReverieOpenAILLMService(
                 api_key=os.getenv("OPENAI_API_KEY"),
@@ -490,20 +539,15 @@ async def main(room_url, token,bot_details):
                 ChatCompletionToolParam(
                     type="function",
                     function={
-                        "name": "conversation_end",
-                        "description": "Funnction to end the call when conversation ends or user wants to end the call or user is busy",
+                        "name": "language_change",
+                        "description": "Funnction to to change the language of the bot to set the stt and tts parameters accordingly",
                         "parameters": {
                             "type": "object",
                             "properties": {
-                                "call_sid": {
+                                "bot_lang": {
                                     "type": "string",
-                                    "description": "The call_sid that is being passed to the function.",
-                                    "default": "call_sid",
-                                },
-                                "stream_sid": {
-                                    "type": "string",
-                                    "description": "The stream_sid that is being passed to the function.",
-                                    "default": "stream_sid",
+                                    "description": "The updated language of the bot passed to the function to change it.",
+                                    "default": bot_lang,
                                 },
                             },
                             "required": ["call_sid", "stream_sid"],
@@ -513,12 +557,27 @@ async def main(room_url, token,bot_details):
             ]
 
             # register conversation_end function
-            # llm.register_function("conversation_end", conversation_end)
+            llm.register_function("language_change", language_change)
 
             rev_pipecat_llm = llm
             context = OpenAILLMContext(messages, tools)
             user_context = LLMUserContextAggregator(context)
             assistant_context = LLMAssistantContextAggregator(context)
+            deepgram_stt_en = DeepgramSTTService(
+                api_key=os.getenv("DEEPGRAM_API_KEY"),
+                url="",
+                live_options=LiveOptions(
+                    encoding="linear16",
+                    language="en-US",
+                    model="nova-2-conversationalai",
+                    sample_rate=16000,
+                    channels=1,
+                    interim_results=True,
+                    smart_format=True,
+                ),
+                language=bot_lang,
+            )
+
 
         stt_services = ReverieSTTService(
             api_key="84148cc0e57e75c7d1b1331bb99a2e94aa588d48",
@@ -554,8 +613,8 @@ async def main(room_url, token,bot_details):
         
 
 
-        user_response = LLMUserResponseAggregator()
-        assistant_response = LLMAssistantResponseAggregator()
+        # user_response = LLMUserResponseAggregator()
+        # assistant_response = LLMAssistantResponseAggregator()
         #call bot.py like this
         # stt = bot.create_stt_pipeline(avaial)
         ta = TalkingAnimation()
@@ -566,19 +625,21 @@ async def main(room_url, token,bot_details):
             # deepgram_stt_hi,
             # deepgram_stt_en,
             stt_services,
-            user_response,
+            # user_response,
             # llm,
             # krutim_llm,
             # dify_llm,
+            user_context,
             rev_pipecat_llm,
             # tts,
             # reverie_tts_kn,
             tts_11labs_hi,
             # azure_tts_hi,
             # reverie_tts_hi,
-            ta,
+            # ta,
             transport.output(),
-            assistant_response,
+            # assistant_response,
+            assistant_context,
         ])
 
         task = PipelineTask(pipeline, PipelineParams(allow_interruptions=True))
