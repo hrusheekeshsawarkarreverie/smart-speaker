@@ -160,6 +160,7 @@ from helpers import (
     ReverieOpenAILLMService,
     KrutrimOpenAILLMService,
     TranslateInput,
+    WelcomeMessageLLMResponseProcessor,
 )
 # from runner import configure
 from pipecat.services.azure import AzureSTTService
@@ -601,7 +602,15 @@ async def main(room_url, token,bot_details):
             model="eleven_turbo_v2",
         )
 
-
+        tts_services = ReverieTTSService(
+            aiohttp_session=session,
+            api_key=os.getenv("REVERIE_API_KEY"),
+            # speaker=f"{lang}_female",  # or another dynamic value if provided
+            speaker= "en_female",
+            format="wav",
+            speed=1.2,
+            pitch=1,
+        )
 
 
         async def english_language_filter(frame) -> bool:
@@ -618,6 +627,7 @@ async def main(room_url, token,bot_details):
         #call bot.py like this
         # stt = bot.create_stt_pipeline(avaial)
         ta = TalkingAnimation()
+        welcome_message_manager = WelcomeMessageLLMResponseProcessor(welcome_message = agent_welcome_message)
 
         pipeline = Pipeline([
             transport.input(),
@@ -631,9 +641,11 @@ async def main(room_url, token,bot_details):
             # dify_llm,
             user_context,
             rev_pipecat_llm,
+            welcome_message_manager,
             # tts,
             # reverie_tts_kn,
-            tts_11labs_hi,
+            # tts_11labs_hi,
+            tts_services,
             # azure_tts_hi,
             # reverie_tts_hi,
             # ta,
